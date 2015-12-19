@@ -14,3 +14,4 @@ vignettes/*.pdf
 
 # ignore tmp folders
 refs/
+.Rproj.user
