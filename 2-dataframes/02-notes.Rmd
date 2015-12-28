@@ -1,0 +1,138 @@
+---
+title: "Session 2 - Dataframes"
+author: "Jongbin Jung"
+date: "January 9-10, 2016"
+output: 
+  beamer_presentation: 
+    fig_height: 5
+    fig_width: 5
+    fonttheme: professionalfonts
+    highlight: zenburn
+    theme: boxes
+---
+
+## Dependencies
+
+- Latest version ($\ge$ `3.1.2`) of `R`  
+  (*free* from <https://www.r-project.org/>)
+- Latest version of `Rstudio` 
+  (also *free* from <https://www.rstudio.com/>)
+- A bunch of *free* packages
+
+```{r, eval=FALSE}
+install.packages('nycflights13')  # sample data frame
+install.packages('dplyr')
+install.packages('tidyr')
+```
+```{r, echo=FALSE, results='hide', message=FALSE}
+options(width=50)
+library('dplyr', 'tidyr')
+```
+
+## Data Frames: Introduction
+- Data frames are the primary representation of data in `R`
+- You can think of a data frame as a two-dimensional *table* of data
+- It helps your sanity to always think of data frames as a table where
+```
+Each column represents a variable/feature
+Each row represents an observation/instance
+```
+
+- Conceptually, a data frame is also a collection of vectors, i.e., 
+each column is a vector that belongs to the (parent) data frame
+- The fastest path to achieving `R`-ninja status is to get familiar with 
+data frames
+
+## Data Frames: First Impression
+- Let's load an existing data frame to take a look at
+```{r, eval=FALSE}
+# install data package (only need to do once)
+install.packages('nycflights13')
+```
+
+```{r}
+# load data package to workspace
+library('nycflights13')
+```
+- The `nycflights13` package contains a single data frame named `flights`
+- Contains data (16 variables) on all 336,776 flights that departed NYC 
+(i.e. JFK, LGA, or EWR) in 2013
+- See documentation for details on what the 16 variables are
+```{r, eval=FALSE}
+?flights
+```
+
+## Data Frames: First Impression (cont'd)
+```{r, echo=FALSE}
+flights <- tbl_df(flights)
+```
+```{r}
+head(flights)  # take a peek at the data frame
+```
+
+## Some Question
+- What questions could you ask (and answer) with this data?
+    - how many flights were there each day?
+    - what was the mean departure delay for flights every month/day?
+    - what is the proportion of annual departures from each of the three airports?
+    - what else?
+
+- By the end of this session, we'll have the tools to answer most (if not all) 
+of the questions you can come up with!
+
+# Data Frame Basics
+
+## Simple Example
+- Use `data.frame()` function to create a data frame
+- Arguments of `data.frame()` are vectors (of equal length) that constitute each 
+column (variable)
+- For example, let's create a data frame of the following table:
+
+Age | Personality | Income 
+--- | ----------- | ------
+24  | Good        | 2000
+22  | Bad         | 5800
+23  | Good        | 4200
+25  | Bad         | 1500
+22  | Good        | 6000
+
+## Simple Example (cont'd)
+- We'll save the data frame to an object (I'll call mine `data`)
+```{r}
+data <- data.frame(  # start the data.frame() 
+    age = c(24, 22, 23, 25, 22),  
+    personality = c('g', 'b', 'g', 'b', 'g'),
+    income = c(2000, 5800, 4200, 1500, 6000)
+)  # finish the data.frame() function
+```
+- Note that the new lines are just a matter of coding style, i.e., it makes the 
+code easier to read
+- The same data frame can be created in a single line:
+```{r, eval=FALSE}
+data <- data.frame(age = c(24, 22, 23, 25, 22), 
+personality = c('g', 'b', 'g', 'b', 'g'), income
+= c(2000, 5800, 4200, 1500, 6000))
+```
+
+## Simple Example (cont'd)
+- Let's take a look at our new data frame
+```{r}
+data
+```
+
+## Indexing: The `$` Operator
+- The `$` operator lets you reference elements of an object (e.g., column 
+vectors of a data frame) in `R`
+```{r}
+data$age
+data$personality
+```
+- Similar to a `.` operation in other programming languages (but note that `.` 
+has no special meaning in `R`!)
+
+
+
+# Munging Data with `dplyr`
+
+
+# Tidy Data with `tidyr`
