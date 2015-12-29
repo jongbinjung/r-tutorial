@@ -178,6 +178,16 @@ data[3, 'age']
 data[3,]$age  # get 'age' of row 3
 data$age[3]  # get third observation of 'age' variable
 ```
+ 
+## Column (Variable) Names
+- To see the column name of a data frame, use the `colnames()` function
+- The column names can be changed by directly assigning a new vector of names 
+to the `colnames()` function
+```{r}
+colnames(data)
+colnames(data) <- c('age', 'attitude', 'income')
+data
+```
 
 ## Write Data Frames to Files
 - Use `write.table()` to write data frames to (text) files
@@ -331,7 +341,7 @@ plot(buick$cylinders)
 ## Introduction to `dplyr`
 - `dplyr` is a package that provides a convenient framework (along with a 
 handful of useful functions) for wrangling data (frames)
-- Install and load the `dplyr` pakcage like you would any other `R` package
+- Install and load the `dplyr` package like you would any other `R` package
 ```{r, eval=FALSE}
 # Install, if you haven't already.
 # Only need to do this once on a single machine.
@@ -534,7 +544,7 @@ big_delay_dates <- filter(summary_by_date,
 ```
 - This method might be prefered if you need the intermediate results in 
 the future
-- If not, there is a better way to chain multiple operations in with `dplyr`
+- If not, there is a better way to chain multiple operations with `dplyr`
 
 ## The Pipe Operator `%>%`
 - The pipe operator, aka the 'magic' operator, takes the output from the verb on 
@@ -590,12 +600,217 @@ april_long_flights
 data.frame(head(april_long_flights, 8))
 ```
 
-
-
-
 # Reshape Data with `tidyr`
 
-# Joins with `merge`
+## Introduction to `tidyr`
+- Recall, the prefered way to think about a data frame:
+```
+Each column represents a variable/feature
+Each row represents an observation/instance
+```
+- Consider the following (fictional) data frame of students' homework grades
+
+ID | HW1 | HW2 | HW3 | HW4 | HW5
+--- | --- | --- | --- | --- | ---
+jamie | 6 | 7 | 3 | 5 | 8
+cersei | 8 | 5 | 2 | 1 | 9
+hodor | 9 | 10 | 9 | 3 | 10
+
+- What are the variables of this data?
+- What are the potential issues with this representation?
+- What are the benefits of this representation?
+
+## Introduction to `tidyr`: An Example
+- For data manipulation/visualization we often prefer to have data in the 
+*long* form
+- The *long* form of the previous data would be
+
+ID | HW | Score
+--- | --- | ---
+jamie | 1 | 6
+jamie | 2 | 7
+$\vdots$ | $\vdots$ | $\vdots$
+hodor | 4 | 3
+hodor | 5 | 10
+
+- `tidyr` is a package that provides a tools for converting data between *long* 
+and *wide* forms
+
+## Introduction to `tidyr`: Getting Started
+- Install and load the `tidyr` package like you would any other `R` package
+```{r, eval=FALSE}
+# Install, if you haven't already.
+# Only need to do this once on a single machine.
+install.packages('tidyr')
+```
+```{r, results='hide', message=FALSE}
+# load package into workspace
+library('tidyr')
+```
+
+## Introduction to `tidyr`: Getting Started (cont'd)
+- Create some random data
+```{r}
+grades <- 
+    data.frame(ID = c('jamie', 'cersei', 'hodor'),
+               matrix(runif(15, 1, 10), nrow=3))
+colnames(grades) <-  c('ID',  paste0('HW', 1:5))
+grades$info <- c('male/lannister', 
+                 'female/lannister',
+                 'male/stark')
+```
+- Take some time to understand what just happened
+
+## Create *long* data with `gather()`
+- With the `grades` data, we would like to create a data frame in the form of
+
+ID | info | HW | score
+--- | --- | --- | ---
+- | - | - | -
+
+- The verb for gathering multiple columns into key-value pairs in `tidyr` 
+is `gather()`
+- The syntax is
+```{r, eval=FALSE}
+gather(data, key, value, ...)
+```
+- where the `...` should be replaced by column specifications
+
+## Create *long* data with `gather()` (cont'd)
+```{r, results='hide'}
+grades.tidy <- gather(grades, HW, score, HW1:HW5)
+grades.tidy
+```
+```{r, echo=FALSE}
+head(grades.tidy)
+```
+
+## Split a Column to Multiple Variables with `separate()`
+- Often, there will be column that you'd prefer to split into multiple 
+variables, e.g., splitting a `date` column to `year`, `month`, and `day`
+- From the `grades` data, notice that the `info` column combines two variables: 
+`sex` and `house`
+- We can split such columns to multiple variables with the `separate()` verb in `tidyr`
+```{r, results='hide'}
+grades.split <- 
+    separate(grades.tidy, info, 
+             into = c('sex', 'house'), sep = '/')
+grades.split
+```
+```{r, echo=FALSE}
+head(grades.split, 3)
+```
+
+## Chaining `tidyr` verbs
+- Note that `tidyr` operations are also verbs that can be chained with the pipe 
+operator `%>%`
+- For example, we can do the previous operations on the `grades` data with the 
+chained operation
+```{r}
+grades.final <- grades %>%
+    gather(HW, score, HW1:HW5) %>%
+    separate(info, into=c('sex', 'house'), sep='/')
+```
+- `tidyr` verbs can also be chained with `dplyr` verbs (and any other function
+that qualifies as a verb, i.e., takes a data frame as the first argument and
+results in a new data frame)
+
+## Exercise
+- Create some random data
+```{r}
+finance <- 
+    data.frame(ID = c('leia', 'han', 'luke'),
+               matrix(rnorm(18, 1e4, 5e3), nrow=3))
+colnames(finance) <- 
+    c('ID', 
+      paste('Income', 2013:2015, sep='_'),
+      paste('Expense', 2013:2015, sep='_'))
+```
+1. Tidy the data to fit the form
+
+ID | type | year | amount
+--- | --- | --- | --- |
+- | - | - | -
+
+2. Find the mean and total Income/Expense for each ID across all years
+    
+# Exercise Solution
+
+## WARNING
+- Solutions to the exercise are presented in the next slide
+- Try the exercise before proceeding!
+
+## Solution 1
+```{r, results='hide'}
+finance <- finance %>%
+    gather(year, amount, 2:7) %>%
+    separate(year, c('type', 'year'), sep='_')
+finance
+```
+```{r, echo=FALSE}
+head(finance, 8)
+```
+
+## Solution 2
+```{r}
+finance.summary <- finance %>%
+    group_by(ID, type) %>% 
+    summarize(mean=mean(amount), total=sum(amount)) 
+finance.summary
+```
+
+# Combining Data with `join`s
+
+## Introduction to `join`s
+- Sometimes, you will find relevant data across multiple datasets, e.g., a list 
+of grades in one dataset and a list of contact information in another
+- In such cases, you may want to `join` the two datasets into a single data frame
+prior to further analysis
+- For a successful `join` you must determine
+    1. One or more variables that uniquely identify matching observations (rows) 
+    in both datasets
+    2. How you wish to join the data, i.e.,
+        - **Left/right join** Retain one of the datasets entirely, while only 
+        keeping matching entries of the other, possibly resulting in a few 
+        missing values (`NA`)
+        - **Inner join** Retain only complete matches, possibly dropping some rows 
+        of both datasets
+        - **Outer (full) join** Retain all rows of both datasets, but potentially 
+        resulting in many missing values (`NA`)
+        
+## Example Datasets
+- For illustration, let's create two data frames
+```{r}
+info <- data.frame(
+    name=c('tony', 'tony', 'rey'),
+    job=c('scientist', 'tiger', 'scavenger'),
+    score=rnorm(3))
+
+power <- data.frame(
+    name=c('tony', 'hank', 'rey'),
+    job=c('scientist', 'scientist', 'scavenger'),
+    strength=rexp(3))
+```
+- How is an observation (row) uniquely identified?
+
+## Left/Right `join`
+- Retain rows of one dataset, and match the rows of the other
+```{r, warning=FALSE}
+left_join(info, power, by=c('name', 'job'))
+right_join(info, power, by=c('name', 'job'))
+```
+
+## Inner `join`
+- Retain only the rows that have matches on both datasets
+```{r, warning=FALSE}
+inner_join(info, power, by=c('name', 'job'))
+```
+
+## Outer (Full) `join`
+- Retain all rows
+```{r, warning=FALSE}
+full_join(info, power, by=c('name', 'job'))
+```
 
 
 ## Reference
