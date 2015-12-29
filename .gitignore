@@ -12,6 +12,10 @@
 vignettes/*.html
 vignettes/*.pdf
 
+# Rmd cache
+*/*_files/
+*/*_cache
+
 # ignore tmp folders
 refs/
 .Rproj.user
