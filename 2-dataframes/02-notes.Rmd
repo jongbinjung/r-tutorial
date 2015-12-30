@@ -812,7 +812,6 @@ inner_join(info, power, by=c('name', 'job'))
 full_join(info, power, by=c('name', 'job'))
 ```
 
-
 ## Reference
 - A great "cheat sheet" for wrangling data with `dplyr` and `tidyr` is available
 for free at 
