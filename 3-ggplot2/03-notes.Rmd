@@ -472,8 +472,60 @@ p <- p + labs(title='Unemployment by time',
 p
 ```
 
-
 ## Legends
+- Changing legend position
+```{r, eval=FALSE}
+# specify either top/left/bottom/right, e.g.,
+p <- p + theme(legend.position='top')
+# or set x/y coordinates to position within plot
+p <- p + theme(legend.position=c(0,1))
+```
+
+- To hide legends for certain `aes`thetics, use `guides()`, e.g.,
+```{r, eval=FALSE}
+# hide color legends
+p <- p + guides(color='none')
+```
+
+## Legends (cont'd)
+- To specify the title/breaks/labels for a legend, use the `scale_*_` of the 
+corresponding `aes`thetic, e.g.,
+```{r, eval=FALSE}
+# to modify legend title/labels for a
+#   continuous variable applied to color aes()
+p <- p + scale_color_continuous(
+    name='legend title',
+    breaks=c(1, 5),  # vector of points to label
+    labels=c('low', 'high') # corresponding labels
+)
+```
+
+
+## Legends (Example)
+```{r, eval=FALSE}
+p <- ggplot(quakes, aes(x=long, y=lat))
+p <- p + geom_point(alpha=.6, 
+                    aes(size=mag, color=depth))
+p <- p + theme(legend.position=c(.1,.1))
+p <- p + scale_size_continuous(name='Magnitude', 
+         breaks=c(4, 6), labels=c('small', 'big'))
+p <- p + guides(color='none')
+p
+```
+
+## Legends (Example Figure)
+```{r, echo=FALSE, fig.height=5, fig.width=5}
+p <- ggplot(quakes, aes(x=long, y=lat))
+p <- p + geom_point(alpha=.6, 
+                    aes(size=mag, color=depth))
+p <- p + theme(legend.position=c(.1,.1))
+p <- p + scale_size_continuous(name='Magnitude', 
+         breaks=c(4, 6), labels=c('small', 'big'))
+p <- p + guides(color='none')
+p
+```
+
+
 
 ## Zooming
 
