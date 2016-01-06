@@ -447,6 +447,38 @@ p
 
 # Scales, Labels, and More
 
+## Scales
+
+## Labels
+- Three major labels on a plot would be
+    1. Plot title: use `ggtitle('title')`
+    2. $x$-axis label: use `xlab('x label')`
+    3. $y$-axis label; use `ylab('y label')`
+    
+- Or, to do all of the above in a single line, use
+```{r, eval=FALSE}
+labs(title='title', x='x label', y='y label')
+```
+
+- `paste()` or `sprintf()` functions could be useful if you want to construct
+labels from data
+
+## Labels (Example)
+```{r, fig.height=2.5, fig.width=5}
+p <- ggplot(economics, aes(x=date, y=unemploy))
+p <- p + geom_line()
+p <- p + labs(title='Unemployment by time',
+              x='Date (by month)', y='Unemployment')
+p
+```
+
+
+## Legends
+
+## Zooming
+
+## Facets
+
 
 # Maps
 
