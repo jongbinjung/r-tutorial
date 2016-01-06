@@ -4,8 +4,8 @@ author: "Jongbin Jung"
 date: "January 9-10, 2016"
 output: 
   beamer_presentation: 
-    fig_height: 3
-    fig_width: 3
+    fig_height: 2
+    fig_width: 2
     fonttheme: professionalfonts
     highlight: zenburn
     theme: boxes
@@ -75,7 +75,7 @@ df.tidy <- gather(df, key=group, value=score, A:B)
 ```
 - What does `df.tidy` look like?
 - Then, use `ggplot2` to *visualize* the data frame (this is what we'll cover 
-in this session, so you're not supposed to understand the folloing code)
+in this session, so you're not supposed to understand the following code)
 
 ## (the `ggplot2` code and plot)
 ```{r, fig.height=2, fig.width=3}
@@ -90,7 +90,6 @@ of the following
     - Explore the distribution of some data with histograms/density plots
     - Plot points on a grid, lines in a plane with meaningful 
     shape/linetype/size/colors
-    - Visualize comparisons with a bar plot
     - Transform coordinates (e.g., log-transform) 
     - Make axis labels, tick-marks, etc. concise and meaningful 
     - Plot geographic locations on a map
@@ -100,7 +99,6 @@ building blocks, such that
     1. you can complete most of the required tasks by yourself
     2. when you need help, you know what to Google (and how to make sense of 
     whatever it is you find)
-
 
 # `ggplot2` Basics
 
@@ -135,10 +133,10 @@ p <- ggplot(data=quakes)
     - The `ggplot` object is assigned to a variable (in this case `p`). The 
     object exists in the workspace, and the *plot* is only generated when you 
     *call* the object itself (i.e., if you type `p` in this case).
-    - An initial `ggplot` object is black, equivalent to a brand new canvas.
+    - An initial `ggplot` object is blank, equivalent to a brand new canvas.
 
 ## `aes`thetic Mappings
-- A key concept that folows the `ggplot` object is `aes`thetic (`aes`) mappings 
+- A key concept that follows the `ggplot` object is `aes`thetic (`aes`) mappings 
 - `aes` mappings tell the `ggplot` object where to find the inputs for certain 
 elements of the plot (e.g., $x$-axis coordinates, colors)
 - For example, from the `quakes` data set, if we want to have the `depth` on 
@@ -154,7 +152,7 @@ p <- ggplot(quakes, aes(x=depth, y=mag) )
     $x$ and $y$ to be visualized
     
 ## Adding `geom`etries (and other elements)
-- The visual building blocks of visual elements in `ggplot2` are `geom`etries
+- The building blocks of visual elements in `ggplot2` are `geom`etries
 - `geom`etries define markings (e.g., points, lines) to be made on the *canvas*
 - Elements such as `geom`etries are (literally) **added** to existing 
 `ggplot` objects
@@ -163,11 +161,11 @@ p <- ggplot(quakes, aes(x=depth, y=mag) )
 p <- ggplot(quakes, aes(x=depth, y=mag))
 p <- p + geom_point()  # add 'point' geometry to p
 ```
-- We'll explore different `geom`etries and visual elements that can be 
+- We'll explore different `geom`etries and visual markings that can be 
 **addedd** to `ggplot` objects in the following sections
 
 ## Saving Plots
-- You can save any plot from `R` with right-click > Save As ... or something 
+- You can save any plot from RStudio with Export > Save As ... or something 
 like that
 - That method of saving plots doesn't scale well, for obvious reasons
 - Use `ggsave()` to save plots to files
@@ -182,8 +180,7 @@ filename that you specify (`png` in the above example)
 ?ggsave
 ```
 
-
-# Single-variable Distributions
+# Single-variable Plots (usually distributions)
 
 ## Histograms
 - Plot a simple histogram by specifying the $x$-axis variable, and adding the 
@@ -195,7 +192,7 @@ p
 ```
 
 ## Histograms (cont'd)
-- Specify the size of each bin in the histogram with the `bindiwdth` argument 
+- Specify the size of each bin in the histogram with the `binwidth` argument 
 in `geom_histogram()`
 ```{r, warning=FALSE, message=FALSE, fig.height=2}
 p <- ggplot(quakes, aes(x=stations))
@@ -222,7 +219,7 @@ p <- p + geom_histogram(binwidth=10,
 p
 ```
 
-## Exercies
+## Exercise
 1. Plot a density histogram of 1,000 random samples from a Uniform (1, 5) 
 distribution using binwidth 0.5
 (hint: use `runif()`)
@@ -244,18 +241,43 @@ p
 ```
 
 ## Solution 2
-- 
 ```{r, fig.height=2}
 p <- ggplot(data=quakes, aes(x=mag))
 p <- p + geom_density()
 p
 ```
 
+# Two-variable Plots (points and lines)
 
+## Points with `geom_point()`
+- Plot points on a 2D plane by specifying variables corresponding to the $x$ 
+and $y$-axis, and adding the  point geometry with `geom_point()`
+```{r, warning=FALSE, message=FALSE, fig.height=2}
+p <- ggplot(quakes, aes(x=long, y=lat))
+p <- p + geom_point()
+p
+```
 
-# Two-variable Plots (points, lines, and bars)
+## A Note on `data` and `aes()` Arguments
+- The `data` and `aes()` arguments, can be declared globally in the `ggplot()` 
+function, or locally in each `geom`etry function, e.g., 
+```{r, warning=FALSE, message=FALSE, fig.height=2}
+p <- ggplot()
+p <- p + geom_point(data=quakes, aes(x=long, y=lat))
+p
+```
+
+## `aes`thetics for `geom_point()`
+- Popular `aes`thetics for `geom_point()` are
+    - `alpha`: point visibility; 0 = invisible, 1 = opaque
+    - `color`: color of the 
+    - `shape`:
 
 # Scales, Coordinates, Labels, and More
+
+## Shapes
+
+![shapes](../img/shapes.pdf)
 
 # Maps
 
