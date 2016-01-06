@@ -4,8 +4,8 @@ author: "Jongbin Jung"
 date: "January 9-10, 2016"
 output: 
   beamer_presentation: 
-    fig_height: 2
-    fig_width: 2
+    fig_height: 3
+    fig_width: 3
     fonttheme: professionalfonts
     highlight: zenburn
     theme: boxes
@@ -18,13 +18,19 @@ output:
   (also *free* from <https://www.rstudio.com/>)
 - A bunch of *free* packages
 ```{r, eval=FALSE}
+# for plotting
 install.packages('ggplot2')
+# for data pre-processing  and formatting
+install.packages('dplyr')
+install.packages('tidyr')
 ```
 ```{r, echo=FALSE, results='hide', message=FALSE}
 options(width=50)
 library('ggplot2')
+library('dplyr')
 library('tidyr')
 ```
+- Basic knowledge of data manipulation (as covered in Session 2)
 
 ## Visualization: Introduction
 - There is more than one framework for thinking about data visualization, e.g.,
@@ -112,13 +118,20 @@ install.packages('ggplot2')
 library('ggplot2')
 ```
 
-- For this session, we'll mainly use the `quakes` data set that's included with
-your `R` installation
-- The data set contains the location (long/lat), depth (Km), Richter Magnitude,
-and ID of reporting station for 1,000 seismic events near Fiji since 1964
-- Take a look at it with
+## Datasets
+- For this session, we'll mainly use the `quakes` and `economics` datasets that
+are included with your `R` installation
+- The `quakes` dataset contains the location (long/lat), depth (Km), Richter 
+Magnitude, and ID of reporting station for 1,000 seismic events near Fiji since 
+1964 
+- The `economics` dataset contains monthly US economic time series data with 
+variables date, personal savings rate (`psavert`), personal consumption 
+expenditures (`pce`), number of unemployed (`unemploy`), median duration of 
+unemployment (`uempmed`), and total population (`pop`)
+- Take a look at each data set with
 ```{r, eval=FALSE}
 quakes
+economics
 ```
 
 ## The `ggplot` Object
@@ -220,10 +233,11 @@ p
 ```
 
 ## Exercise
-1. Plot a density histogram of 1,000 random samples from a Uniform (1, 5) 
+1. Plot a density histogram of 1,000 random samples from a standard normal 
 distribution using binwidth 0.5
-(hint: use `runif()`)
-2. Plot the (smooth) density of the `mag` variable from the `quakes` data
+(hint: use `rnorm()`)
+2. Plot the (smooth) density of the population (`pop`) variable from the 
+`economics` data
 
 # Exercise Solution 
 
@@ -233,7 +247,7 @@ distribution using binwidth 0.5
 
 ## Solution 1
 ```{r, fig.height=2}
-X <- data.frame(x=runif(1000, 1, 5))
+X <- data.frame(x=rnorm(1000))
 p <- ggplot(data=X, aes(x=x))
 p <- p + geom_histogram(binwidth=0.5, 
                         aes(y=..density..))
@@ -241,8 +255,8 @@ p
 ```
 
 ## Solution 2
-```{r, fig.height=2}
-p <- ggplot(data=quakes, aes(x=mag))
+```{r, fig.height=2, fig.width=4}
+p <- ggplot(data=economics, aes(x=pop))
 p <- p + geom_density()
 p
 ```
@@ -251,33 +265,185 @@ p
 
 ## Points with `geom_point()`
 - Plot points on a 2D plane by specifying variables corresponding to the $x$ 
-and $y$-axis, and adding the  point geometry with `geom_point()`
-```{r, warning=FALSE, message=FALSE, fig.height=2}
+and $y$-axis, and adding the point geometry with `geom_point()`
+```{r, warning=FALSE, message=FALSE, fig.height=2, fig.width=3}
 p <- ggplot(quakes, aes(x=long, y=lat))
 p <- p + geom_point()
-p
-```
-
-## A Note on `data` and `aes()` Arguments
-- The `data` and `aes()` arguments, can be declared globally in the `ggplot()` 
-function, or locally in each `geom`etry function, e.g., 
-```{r, warning=FALSE, message=FALSE, fig.height=2}
-p <- ggplot()
-p <- p + geom_point(data=quakes, aes(x=long, y=lat))
 p
 ```
 
 ## `aes`thetics for `geom_point()`
 - Popular `aes`thetics for `geom_point()` are
     - `alpha`: point visibility; 0 = invisible, 1 = opaque
-    - `color`: color of the 
-    - `shape`:
+    - `color`: color of the points (try `colors()` to see a list of some 
+    pre-defined colors)
+    - `shape`: shape of the points (predefined, see  next slide for reference)
+    - `size`: size of the points
+    - `fill`: color used to fill-in the points (only applies to certain shapes, 
+    i.e., shape numbers 21 to 25)
+    
+## Reference: Shapes
+```{r, echo=FALSE, fig.height=3, fig.width=5, warning=FALSE}
+d=data.frame(p=c(0:25,32:127))
+ggplot() +
+scale_y_continuous(name="", breaks=NULL) +
+scale_x_continuous(name="", breaks=NULL) +
+scale_shape_identity() +
+geom_point(data=d, mapping=aes(x=p%%16, y=p%/%16, shape=p), size=2, fill="red") +
+geom_text(data=d, mapping=aes(x=p%%16, y=p%/%16+0.25, label=p), size=1.5)
+```
+
+## Lines with `geom_line()`
+- Similarly, plot lines on a 2D plane by specifying variables corresponding to 
+the $x$ and $y$-axis, and adding the line geometry with `geom_line()`
+```{r, warning=FALSE, message=FALSE, fig.height=2, fig.width=5}
+p <- ggplot(economics, aes(x=date, y=unemploy))
+p <- p + geom_line()
+p
+```
+
+## `aes`thetics for `geom_line()`
+- Popular `aes`thetics for `geom_point()` are
+    - `alpha`: line visibility; 0 = invisible, 1 = opaque
+    - `color`: color of the lines
+    - `linetype`: shape of lines (predefined, see  next slide for reference)
+    - `size`: size (thickness) of the lines
+    
+## Reference: Linetypes
+```{r, echo=FALSE, fig.height=3, fig.width=5, warning=FALSE}
+d=data.frame(lt=c("blank", "solid", "dashed", "dotted", "dotdash", "longdash",
+                  "twodash", "1F", "F1", "4C88C488", "12345678"))
+ggplot() +
+scale_x_continuous(name="", limits=c(0,1), breaks=NULL) +
+scale_y_discrete(name="linetype") +
+scale_linetype_identity() +
+geom_segment(data=d, mapping=aes(x=0, xend=1, y=lt, yend=lt, linetype=lt))
+```
+
+## A Note on `data` and `aes()` Arguments
+- The `data` and `aes()` arguments, can be declared globally in the `ggplot()` 
+function, or locally in each `geom`etry function
+- Also, `aes`thetics can be either
+    - mapped to a variable *globally*, i.e., in  `ggplot(aes())`
+    - mapped to a variable *locally*, i.e., in `geom_*(aes())`, or
+    - defined explicitly for a local `geom_*()`, outside of `aes()`
+
+## Example: Global `aes()` mapping
+```{r, eval=FALSE}
+p <- ggplot(quakes, aes(x=long, y=lat, size=mag))
+p <- p + geom_point(alpha=.3)
+p
+```
+- the `data` and `aes`thetic mappings for `x`, `y`, and `size` are defined 
+globally in `ggplot()`
+- this means any `geom_*` added to this `ggplot` will have the specified `x`, 
+`y`, and `size` `aes`thetic *mappings*, unless assigned otherwise within their 
+own `geom_*()` function
+- the `alpha` `aes`thetic for `geom_point`, on the other hand, is defined 
+**explicitly** (i.e., it is **set** to 0.3, and not mapped to a variable)
+
+## Example: Global `aes()` mapping (figure)
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=3, fig.width=5}
+p <- ggplot(quakes, aes(x=long, y=lat, size=mag))
+p <- p + geom_point(alpha=.3)
+p
+```
+
+## Example: Local `aes()` mapping
+```{r, eval=FALSE}
+p <- ggplot(quakes, aes(x=long, y=lat))
+p <- p + geom_point(alpha=.3, aes(size=mag))
+p <- p + geom_point(size=1, aes(color=stations))
+p
+```
+- Here, the `data` and `aes`thetic mappings for `x` and `y` are defined 
+globally in `ggplot()`
+- But the `aes`thetic mapping/value for `size` is defined locally for each 
+specific `geom_point()` 
+- The first `geom_point()` maps `size` to the `mag` variable, which means the 
+size of the points will depend on the corresponding value of `mag`
+- The second `geom_point()` explicitly assigns `size` to the fixed value 1, but 
+maps the `color` `aes`thetic to the `stations` variable
+- What do you think the plot will look like?
+
+## Example: Local `aes()` mapping (figure)
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=3.5, fig.width=5}
+p <- ggplot(quakes, aes(x=long, y=lat))
+p <- p + geom_point(alpha=.3, aes(size=mag))
+p <- p + geom_point(size=1, aes(color=stations))
+p
+```
+
+## Exercise
+1. Using the `economics` dataset, plot lines for the values of `unemploy` and 
+`pop` with different linetypes, against `date` as the horizontal axis. 
+(hint: you'll need to select the variables you need, and tidy the data into 
+long format)
+
+2. With the `quakes` dataset, generate a scatter plot of the mean `depth` for 
+seismic events reported by each of the 102 `stations`, with the `stations` on 
+the horizontal ($x$) axis. Let the colors of each point represent each station, 
+the size represent the ratio `min(mag)/max(mag)` within the seismic events 
+reported from each station, and set `alpha=.6`. (hint: group and summarize 
+the data with `dplyr` first)
+
+# Exercise Solution 
+
+## WARNING
+- Solutions to the exercise are presented in the next slide
+- Try the exercise before proceeding!
+
+## Solution 1
+```{r, eval=FALSE}
+# first, get the data into the right format
+econ.tidy <- economics %>%
+    select(date, unemploy, pop) %>%
+    gather(var, value, unemploy:pop)
+
+# generate the plot
+p <- ggplot(econ.tidy, aes(x=date, y=value))
+p <- p + geom_line(aes(linetype=var))
+p
+```
+
+## Solution 1 (figure)
+```{r, echo=FALSE, fig.width=5, fig.height=3.5}
+econ.tidy <- economics %>%
+    select(date, unemploy, pop) %>%
+    gather(var, value, unemploy:pop)
+p <- ggplot(econ.tidy, aes(x=date, y=value))
+p <- p + geom_line(aes(linetype=var))
+p
+```
+
+## Solution 2 
+```{r, eval=FALSE}
+# summarize the data
+quakes_by_stations <- quakes %>%
+    group_by(stations) %>%
+    summarize(mdepth=mean(depth), 
+              rmag=min(mag)/max(mag))
+
+# generate plot
+p <- ggplot(quakes_by_stations, 
+            aes(x=stations, y=mdepth))
+p <- p + geom_point(alpha=.6,
+                    aes(size=rmag, color=stations))
+p
+```
+
+## Solution 2 (figure)
+```{r, echo=FALSE, fig.width=5, fig.height=3.5}
+quakes_by_stations <- quakes %>%
+    group_by(stations) %>%
+    summarize(mdepth=mean(depth), rmag=min(mag)/max(mag))
+p <- ggplot(quakes_by_stations, aes(x=stations, y=mdepth))
+p <- p + geom_point(alpha=.6, aes(size=rmag, color=stations))
+p
+```
 
 # Scales, Coordinates, Labels, and More
 
-## Shapes
-
-![shapes](../img/shapes.pdf)
 
 # Maps
 
