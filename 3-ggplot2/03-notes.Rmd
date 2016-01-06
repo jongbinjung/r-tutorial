@@ -18,8 +18,10 @@ output:
   (also *free* from <https://www.rstudio.com/>)
 - A bunch of *free* packages
 ```{r, eval=FALSE}
-# for plotting
-install.packages('ggplot2')
+# for general plotting
+install.packages('ggplot2') 
+# spacial visualization on maps
+install.packages('ggmap')   
 # for data pre-processing  and formatting
 install.packages('dplyr')
 install.packages('tidyr')
@@ -27,6 +29,7 @@ install.packages('tidyr')
 ```{r, echo=FALSE, results='hide', message=FALSE}
 options(width=50)
 library('ggplot2')
+library('ggmap')
 library('dplyr')
 library('tidyr')
 ```
@@ -442,13 +445,100 @@ p <- p + geom_point(alpha=.6, aes(size=rmag, color=stations))
 p
 ```
 
-# Scales, Coordinates, Labels, and More
+# Scales, Labels, and More
 
 
 # Maps
 
+## The map layer with `ggmap`
+- With data that involve spacial coordinates (i.e., long/lat), you might want to
+use the corresponding geographic map as a 'canvas'
+- This is easily achieved in `ggplot` with the `ggmap` package
 
+- Install and load the `ggmap` package like you would any other `R` package
+```{r, eval=FALSE}
+# Install, if you haven't already.
+# Only need to do this once on a single machine.
+install.packages('ggmap')
+# load package into workspace
+library('ggmap')
+```
+
+## Initializing a map layer
+- Use the `qmap` function to initialize a `ggplot` object with a map layer
+- The main arguments for `qmap` are
+    - `location`: an address, vector of longitude/latitude pair (in that order), 
+    or vector of left/bottom/right/top bounding box
+    - `zoom`: the zoom level in integer values from 3 (continent) to 
+    21 (building)
+    - `color`: either 'color' or 'bw' (for grayscale)
+    - `maptype`: character string providing map theme, e.g., 'terrain', 
+    'satellite', 'roadmap', 'hybrid', etc.
+    - `legend`: position for the legend, e.g., 'top', 'right', 'topleft', 
+    'bottomright', 'none', etc.
+- `qmap` loads maps from Google maps by default, but can be changed 
+to other sources
+- see `?qmap`, `?ggmap`, and `?get_map` for more details
+
+## A Map Layer Example: Location Search
+```{r, fig.height=2, message=FALSE, warning=FALSE}
+# Map of stanford by search
+p <- qmap(location='Stanford, CA', zoom=15, 
+          maptype='satellite')
+p
+```
+
+## A Map Layer Example
+```{r, fig.height=2, message=FALSE, warning=FALSE}
+# Bounding box around North America 
+# (I Googled the numbers)
+p <- qmap(location=c(left=-52.233, 
+          bottom=5.4996, right=-167.2764, 
+          top=83.1621), zoom=3)
+p
+```
  
+## Exercise
+- Plot the `quakes` data as a scatter plot on a map, using a bounding box with 
+an appropriate zoom level. 
+Let the `size` of points represent the `mag` variable, and `color` represent 
+`depth`. Set `alpha` to 0.6. (hint: use the `max`/`min` of `long`/`lat` 
+variables to define the bounding box)
+
+# Exercise Solution 
+
+## WARNING
+- Solutions to the exercise are presented in the next slide
+- Try the exercise before proceeding!
+
+## Solution
+```{r, eval=FALSE}
+maxmag <- filter(quakes, mag==max(quakes$mag))
+p <- qmap(location=c(left=min(quakes$long), 
+                     bottom=min(quakes$lat),
+                     right=max(quakes$long),
+                     top=max(quakes$lat)),
+          zoom=4, color='bw', legend='topleft')
+p <- p + geom_point(data=quakes, alpha=0.6,
+                    aes(x=long, y=lat, size=mag,
+                        color=depth))
+p
+```
+
+## Solution (figure)
+```{r, echo=FALSE, fig.height=5, fig.width=5, warning=FALSE, message=FALSE}
+maxmag <- filter(quakes, mag==max(quakes$mag))
+p <- qmap(location=c(left=min(quakes$long), 
+                     bottom=min(quakes$lat),
+                     right=max(quakes$long),
+                     top=max(quakes$lat)),
+          zoom=4, color='bw', legend='topleft')
+p <- p + geom_point(data=quakes, alpha=0.6,
+                    aes(x=long, y=lat, size=mag,
+                        color=depth))
+p
+```
+
 ## Reference
 - A great "cheat sheet" for data visualization with `ggplot2` is available
 for free at 
