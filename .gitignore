@@ -19,3 +19,6 @@ vignettes/*.pdf
 # ignore tmp folders
 refs/
 .Rproj.user
+
+# impressive cache
+*.pdf.info
