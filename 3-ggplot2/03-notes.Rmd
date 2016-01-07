@@ -16,10 +16,12 @@ output:
   (*free* from <https://www.r-project.org/>)
 - Latest version of `Rstudio` 
   (also *free* from <https://www.rstudio.com/>)
+- Basic knowledge of data manipulation (as covered in Session 2)
 - A bunch of *free* packages
 ```{r, eval=FALSE}
 # for general plotting
 install.packages('ggplot2') 
+install.packages('scales') 
 # spacial visualization on maps
 install.packages('ggmap')   
 # for data pre-processing  and formatting
@@ -29,11 +31,11 @@ install.packages('tidyr')
 ```{r, echo=FALSE, results='hide', message=FALSE}
 options(width=50)
 library('ggplot2')
+library('scales')
 library('ggmap')
 library('dplyr')
 library('tidyr')
 ```
-- Basic knowledge of data manipulation (as covered in Session 2)
 
 ## Visualization: Introduction
 - There is more than one framework for thinking about data visualization, e.g.,
@@ -123,18 +125,19 @@ library('ggplot2')
 
 ## Datasets
 - For this session, we'll mainly use the `quakes` and `economics` datasets that
-are included with your `R` installation
+are included with your `R` installation and the `mpg` data set included 
+with `ggplot2`
 - The `quakes` dataset contains the location (long/lat), depth (Km), Richter 
 Magnitude, and ID of reporting station for 1,000 seismic events near Fiji since 
 1964 
-- The `economics` dataset contains monthly US economic time series data with 
-variables date, personal savings rate (`psavert`), personal consumption 
-expenditures (`pce`), number of unemployed (`unemploy`), median duration of 
-unemployment (`uempmed`), and total population (`pop`)
-- Take a look at each data set with
+- The `economics` dataset contains monthly US economic time series data 
+- The `mpg` dataset contains a subset of the fuel economy data made public via
+http://fueleconomy.gov
+- Take a look at each data set and accompanying documentation
 ```{r, eval=FALSE}
-quakes
-economics
+?quakes
+?economics
+?mpg
 ```
 
 ## The `ggplot` Object
@@ -390,6 +393,10 @@ the size represent the ratio `min(mag)/max(mag)` within the seismic events
 reported from each station, and set `alpha=.6`. (hint: group and summarize 
 the data with `dplyr` first)
 
+3. With the `mpg` dataset, generate a scatter plot with `hwy` on the $x$-axis
+and `cty` on the $y$-axis. Let the `color` represent to `class` and `size` 
+represent `cyl`. Also set `alpha=.3`.
+
 # Exercise Solution 
 
 ## WARNING
@@ -445,9 +452,24 @@ p <- p + geom_point(alpha=.6, aes(size=rmag, color=stations))
 p
 ```
 
-# Scales, Labels, and More
+## Solution 3
+```{r, eval=FALSE}
+p <- ggplot(mpg, aes(x=hwy, y=cty))
+p <- p + geom_point(alpha=.3, 
+                    aes(color=class, size=cyl))
+p
+```
 
-## Scales
+## Solution 3 (figure)
+```{r, echo=FALSE, fig.width=5, fig.height=3.5}
+p <- ggplot(mpg, aes(x=hwy, y=cty))
+p <- p + geom_point(alpha=.3, 
+                    aes(color=class, size=cyl))
+p
+```
+
+
+# Scales, Labels, and More
 
 ## Labels
 - Three major labels on a plot would be
@@ -472,24 +494,137 @@ p <- p + labs(title='Unemployment by time',
 p
 ```
 
-## Legends
+## Scales
+- The mapping between data and `aes`thetics is controled via **scales**
+- The `scales` package provides many helpful functions when working with scales
+```{r, eval=FALSE}
+# Install, if you haven't already.
+# Only need to do this once on a single machine.
+install.packages('scales')
+# load package into workspace
+library('scales')
+```
+
+## Scales: General Syntax
+- The general syntax for setting scales is
+```{r, eval=FALSE}
+scales_{aes name}_{some option}(
+    # range of data values to map
+    limits = ... 
+    # vector of aes values to map 
+    values = ...  
+    # breaks to use in legend/axis
+    breaks = ...
+    # name of legend/axis
+    name = ...
+    # labels to use in legend/axis
+    labels = ...
+)
+```
+- Some scales have specific arguments/convenience functions
+- Be sure to checkout the documentation!
+
+## Axis Specific Scales
+- There are scales specifically for controling the $x$/$y$-axes (examples are 
+given for $x$, but can be used for $y$ by substituting $x$ for $y$)
+    - `scale_x_log10()`: Plot $x$ on `log10` scale
+    - `scale_x_reverse()`: Reverse the direction of the $x$ axis
+    - `scale_x_sqrt()`: Plot $x$ on square root scale
+    - `scale_x_date(labels=date_format("%m/%d"), breaks=date_breaks("2 weeks"))`
+    : For axes in date format. See `?strptime` for label formats, and 
+    `scale_x_date` for more details
+    
+## Axis Scales Example
+- To plot `unemploy` against `date`, but mark the $x$ axis for every 15 years, 
+we would write
+```{r, eval=FALSE}
+p <- ggplot(economics, aes(x=date, y=unemploy))
+p <- p + geom_line()
+p <- p + scale_x_date(labels=date_format('%Y'),
+    breaks=date_breaks("15 years"))
+p
+```
+
+## Axis Scales Example (figure)
+```{r, echo=FALSE, fig.height=5, fig.width=7}
+p <- ggplot(economics, aes(x=date, y=unemploy))
+p <- p + geom_line()
+p <- p + scale_x_date(labels=date_format('%Y'), breaks=date_breaks("15 years"))
+p
+```
+
+## General Purpose Scales
+- Scales for specific `aes`thetics can be controled with the following functions
+(where `*` should be replaced with the desired `aes`thetic, e.g., `color`, 
+`shape`)
+    - `scale_*_continuous()`: map continuous values to visual values
+    - `scale_*_discrete()`: map discrete values to visual values
+    - `scale_*_identity()`: map raw data to visual values 
+    (e.g., a data value of 1 equals shape #1)
+    - `scale_*_manual()`: map discrete values to manually assigned visual values
+
+## Scales: Example
+- For example, with the `mpg` data, we wish to plot `hwy` against `cty`, with
+red points for `class=suv` and blue points otherwise
+```{r, eval=FALSE}
+# First, create a new column in the data indicating 
+# whether the entry has class suv or not
+mpg.suv <- mpg %>%
+    mutate(issuv=ifelse(class=='suv', TRUE, FALSE))
+# Generate the plot with a manual color scale
+p <- ggplot(mpg.suv, aes(x=hwy, y=cty))
+p <- p + geom_point(aes(color=issuv))
+p <- p + scale_color_manual(
+    limits=c(FALSE, TRUE), values=c('blue', 'red'),
+    breaks=c(TRUE, FALSE), labels=c('SUV', 'Other')
+)
+p
+```
+
+## Scales: Example (figure)
+```{r, echo=FALSE, fig.height=5, fig.width=6}
+# First, create a new column in the data indicating 
+# whether the entry has class suv or not
+mpg.suv <- mpg %>%
+    mutate(issuv=ifelse(class=='suv', TRUE, FALSE))
+# Generate the plot with a manual color scale
+p <- ggplot(mpg.suv, aes(x=hwy, y=cty))
+p <- p + geom_point(aes(color=issuv))
+p <- p + scale_color_manual(
+    limits=c(FALSE, TRUE), values=c('blue', 'red'),
+    breaks=c(TRUE, FALSE), labels=c('SUV', 'Other')
+)
+p
+```
+
+
+## Legends: Positions
 - Changing legend position
+- The `legend.justification` determines the 'anchor point' of the legend
+- Takes a vector of two numbers between 0 and 1, where the first determines 
+left(0)/right(1) and the second determines bottom(0)/top(1)
+- For example, setting `legend.justification` to `c(0, 0)` would anchor the 
+legend at left/bottom, while `c(1, 0)` would anchor the legend at right/bottom
 ```{r, eval=FALSE}
 # specify either top/left/bottom/right, e.g.,
 p <- p + theme(legend.position='top')
 # or set x/y coordinates to position within plot
-p <- p + theme(legend.position=c(0,1))
+p <- p + theme(legend.position=c(0,1),
+               legend.justification=c(0,0))
 ```
 
-- To hide legends for certain `aes`thetics, use `guides()`, e.g.,
+## Legends: Guides
+- `guides()` is used to set the legend type for specific `aes`thetics
+- A common use-case is, for example, to hide legends by setting the `aes`thetic 
+to `none` in `guides()`, e.g., 
 ```{r, eval=FALSE}
 # hide color legends
 p <- p + guides(color='none')
 ```
 
-## Legends (cont'd)
-- To specify the title/breaks/labels for a legend, use the `scale_*_` of the 
-corresponding `aes`thetic, e.g.,
+## Legends: Scales
+- As shown in the scales section, we can specify the title/breaks/labels for a 
+legend, using the `scale_*_` of the  corresponding `aes`thetic, e.g.,
 ```{r, eval=FALSE}
 # to modify legend title/labels for a
 #   continuous variable applied to color aes()
@@ -500,13 +635,13 @@ p <- p + scale_color_continuous(
 )
 ```
 
-
 ## Legends (Example)
 ```{r, eval=FALSE}
 p <- ggplot(quakes, aes(x=long, y=lat))
 p <- p + geom_point(alpha=.6, 
                     aes(size=mag, color=depth))
-p <- p + theme(legend.position=c(.1,.1))
+p <- p + theme(legend.position=c(0,0),
+               legend.justification=c(0,0))
 p <- p + scale_size_continuous(name='Magnitude', 
          breaks=c(4, 6), labels=c('small', 'big'))
 p <- p + guides(color='none')
@@ -525,12 +660,99 @@ p <- p + guides(color='none')
 p
 ```
 
-
-
-## Zooming
-
 ## Facets
+- Facets let you divide a plot into subplots based on the values of a (discrete) variable
+- The notation is
+```{r, eval=FALSE}
+# divide into subplots of 2D grid
+# using upto two variables
+facet_grid( var.row ~ var.col)
 
+# wrap into a rectangular layout
+# using a single variable
+facet_wrap(~ var, nrow=NULL, ncol=NULL)
+```
+
+- `var.row` is the name of the variable to use to divide the rows
+- `var.col` is the name of the variable to use to divide the columns
+- Substitute with '`,`' to skip either row or column division
+- Best demonstrated with examples ...
+
+## Facets: Examples
+- `facet_grid()` with one variable (columns)
+```{r, eval=FALSE}
+p <- ggplot(mpg, aes(x=hwy, y=cty))
+p <- p + geom_point()
+p <- p + facet_grid(. ~ cyl)
+p
+```
+
+## Facets: Examples (figure)
+```{r, echo=FALSE, fig.height=5, fig.width=7}
+p <- ggplot(mpg, aes(x=hwy, y=cty))
+p <- p + geom_point()
+p <- p + facet_grid(. ~ cyl)
+p
+```
+
+## Facets: Examples
+- `facet_grid()` with one variable (rows)
+```{r, eval=FALSE}
+p <- ggplot(mpg, aes(x=hwy, y=cty))
+p <- p + geom_point()
+p <- p + facet_grid(year ~ .)
+p
+```
+
+## Facets: Examples (figure)
+```{r, echo=FALSE, fig.height=5, fig.width=7}
+p <- ggplot(mpg, aes(x=hwy, y=cty))
+p <- p + geom_point()
+p <- p + facet_grid(year ~ .)
+p
+```
+
+## Facets: Examples
+- `facet_grid()` with two variables
+```{r, eval=FALSE}
+p <- ggplot(mpg, aes(x=hwy, y=cty))
+p <- p + geom_point()
+p <- p + facet_grid(year ~ cyl)
+p
+```
+
+## Facets: Examples (figure)
+```{r, echo=FALSE, fig.height=5, fig.width=7}
+p <- ggplot(mpg, aes(x=hwy, y=cty))
+p <- p + geom_point()
+p <- p + facet_grid(year ~ cyl)
+p
+```
+
+## Facets: Examples
+- `facet_wrap()`
+```{r, eval=FALSE}
+p <- ggplot(mpg, aes(x=hwy, y=cty))
+p <- p + geom_point()
+p <- p + facet_wrap( ~ fl)
+p
+```
+
+## Facets: Examples (figure)
+```{r, echo=FALSE, fig.height=5, fig.width=7}
+p <- ggplot(mpg, aes(x=hwy, y=cty))
+p <- p + geom_point()
+p <- p + facet_wrap( ~ fl)
+p
+```
+
+## Exercise
+- Now we've covered almost all of the basic concepts of ggplot2!
+- Using any of the tools we've covered, how would you best visualize the `mpg` 
+dataset to compare `hwy` against `cty`?
+- How would you best visualize any potential insights there might be with regard 
+to unemployment in the `economics` dataset?
+- There's no "answer" to this one. Explore and share!
 
 # Maps
 
