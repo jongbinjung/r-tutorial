@@ -25,17 +25,14 @@ output:
   (*free* from <https://www.r-project.org/>)
 - Latest version of `Rstudio` 
   (also *free* from <https://www.rstudio.com/>)
-- A bunch of *free* packages
-
-```{r, eval=FALSE}
-install.packages('dplyr')
-install.packages('ggplot2')
-```
 
 ## `Rstudio` Basics
 ![Screenshot of Rstudio](../img/r-studio.png)
 
 ## `Rstudio` Basics
+- Save/load scripts as text files named `*.R`
+- Save/load environment as `.Rdata` file
+- `Ctrl` + `L`: Clear console
 - `Ctrl` + `#`: Focus on panel `#`
 - `Ctrl` + `Enter`: Execute selection
 - `Ctrl` + `Shift` + `C`: Comment/Uncomment selection
@@ -54,7 +51,7 @@ getwd()
 setwd("path")
 ```
  - Note that `~` is replaced with your `HOME` directory, e.g. 
- `C:\Users\Username\` in windows
+ `C:\Users\Username\Documents` in windows
  - Use forward slashes (`/`), even on Windows!
 ```{r, eval=FALSE, tidy=TRUE}
 setwd("~/Documents/R")  
