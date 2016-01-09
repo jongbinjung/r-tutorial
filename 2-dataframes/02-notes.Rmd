@@ -345,7 +345,7 @@ handful of useful functions) for wrangling data (frames)
 ```{r, eval=FALSE}
 # Install, if you haven't already.
 # Only need to do this once on a single machine.
-install.packages('dplry')
+install.packages('dplyr')
 # load package into workspace
 library('dplyr')
 ```
