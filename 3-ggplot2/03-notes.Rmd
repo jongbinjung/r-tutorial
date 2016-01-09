@@ -9,6 +9,7 @@ output:
     fonttheme: professionalfonts
     highlight: zenburn
     theme: boxes
+    toc: yes
 ---
 
 ## Dependencies
@@ -39,8 +40,8 @@ library('tidyr')
 
 ## Visualization: Introduction
 - There is more than one framework for thinking about data visualization, e.g.,
-    1. Mapping of vectors to 2D/3D surfaces 
-    2. Function of **inputs** given as varaibles of a data set, 
+    1. Mapping (function) of points/vectors in 2D/3D surface/space
+    2. Function of **inputs** given as variables of a data set, 
     **geometries** and **aesthetics** that describe visual markings, and a 
     **coordinate** system that defines the location of each marking
     
@@ -49,7 +50,7 @@ classical plotting function in `R`),  but doesn't scale well with data
 
 - The second approach, implemented in `R` with the `ggplot2` package,
 is prefered when working with large scale data, but requires the data frame to 
-be formatted an a specific manner (i.e., in the *long* format)
+be formatted in a specific manner (i.e., in the *long* format)
 
 ## Quick Comparison: An Example
 - We're given the following data as a result of some experiment
@@ -88,12 +89,17 @@ df.tidy <- gather(df, key=group, value=score, A:B)
 - Then, use `ggplot2` to *visualize* the data frame (this is what we'll cover 
 in this session, so you're not supposed to understand the following code)
 
-## (the `ggplot2` code and plot)
+## `ggplot2` Code and Plot
 ```{r, fig.height=2, fig.width=3}
 p <- ggplot(df.tidy, aes(x=time, y=score))
 p <- p + geom_line(aes(color=group))
 p
 ```
+
+## Quick Comparison: Thoughts?
+- What would be the benefits/downsides of either approach?
+- In what situation would you rather use one over the other?
+- Can you come up with a better approach?
 
 ## Some Common Visualization Tasks
 - Most visualization tasks of a data scientist will fall into some combination 
@@ -245,8 +251,6 @@ distribution using binwidth 0.5
 2. Plot the (smooth) density of the population (`pop`) variable from the 
 `economics` data
 
-# Exercise Solution 
-
 ## WARNING
 - Solutions to the exercise are presented in the next slide
 - Try the exercise before proceeding!
@@ -333,6 +337,8 @@ function, or locally in each `geom`etry function
     - mapped to a variable *globally*, i.e., in  `ggplot(aes())`
     - mapped to a variable *locally*, i.e., in `geom_*(aes())`, or
     - defined explicitly for a local `geom_*()`, outside of `aes()`
+- It's critical to understand the difference between 'mapping' an aesthetic and 
+'explicitly defining' one
 
 ## Example: Global `aes()` mapping
 ```{r, eval=FALSE}
@@ -396,8 +402,6 @@ the data with `dplyr` first)
 3. With the `mpg` dataset, generate a scatter plot with `hwy` on the $x$-axis
 and `cty` on the $y$-axis. Let the `color` represent to `class` and `size` 
 represent `cyl`. Also set `alpha=.3`.
-
-# Exercise Solution 
 
 ## WARNING
 - Solutions to the exercise are presented in the next slide
@@ -675,7 +679,7 @@ facet_wrap(~ var, nrow=NULL, ncol=NULL)
 
 - `var.row` is the name of the variable to use to divide the rows
 - `var.col` is the name of the variable to use to divide the columns
-- Substitute with '`,`' to skip either row or column division
+- Substitute with '`.`' to skip either row or column division
 - Best demonstrated with examples ...
 
 ## Facets: Examples
@@ -810,8 +814,6 @@ an appropriate zoom level.
 Let the `size` of points represent the `mag` variable, and `color` represent 
 `depth`. Set `alpha` to 0.6. (hint: use the `max`/`min` of `long`/`lat` 
 variables to define the bounding box)
-
-# Exercise Solution 
 
 ## WARNING
 - Solutions to the exercise are presented in the next slide
