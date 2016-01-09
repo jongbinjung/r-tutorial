@@ -1,5 +1,5 @@
 ---
-title: "Session 2 - Dataframes"
+title: "Session 2 - Data frames"
 author: "Jongbin Jung"
 date: "January 9-10, 2016"
 output: 
