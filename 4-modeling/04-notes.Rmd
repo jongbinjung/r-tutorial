@@ -21,8 +21,7 @@ output:
 lm, glm # loaded with R by default
 install.packages('glmnet')
 install.packages('randomForest')
-install.packages('ROCR')
-install.packages('ggplot2')
+install.packages('ggplot2')  # just for dataset
 install.packages('dplyr')
 install.packages('caret')  # optional
 ```
@@ -31,7 +30,6 @@ install.packages('caret')  # optional
 options(width=50, digits=3)
 library('glmnet')
 library('randomForest')
-library('ROCR')
 library('ggplot2')
 library('dplyr')
 library('caret')
@@ -281,13 +279,196 @@ test_mm <-
 # Training models
 
 ## (OLS) Linear Regression
-- Linear regression models can be fitted in `R` using `lm`
+- Linear regression models can be fitted in `R` using `lm`, with the syntax
+```{r, eval=FALSE}
+my_model <- lm(formula, data)
+```
+- The `data` should be a data frame, and the formula should refer to the column 
+names of `data` as variables
+
+- Explore the model with generic functions `summary()` and `coef()`, 
+once trained
+```{r, eval=FALSE}
+summary(my_model)
+coef(my_model)
+```
+- Values (e.g., 'risiduals') of the model can be indexed with the `$` operator
+
+## (OLS) Linear Regression: Example
+- Let's build a linear regression model of `price` against `carat` and `cut`, 
+using the `train_std` we created earlier
+```{r}
+fm <- lm(price ~ carat + cut, train_std)
+```
+- Explore the model with
+```{r, eval=FALSE}
+coef(fm)
+summary(fm)
+```
+- Note how `cut` is automatically transformed to an appropriate form
 
 ## Logistic Regression with `glm`
+- We can use `glm` for generalized linear models, just like we use `lm` for 
+OLS models
+```{r, eval=FALSE}
+my_model <- glm(formula, data, family)
+```
+- `family` is a description of the link function to be used
+- Recall, a logistic regression is a generalized linear model that uses a logit 
+link function
+- The logit link function is described in a `binomial` family object in `R` 
+(see `?family` for other link functions)
+- So, to fit a logistic regression model, we write
+```{r, eval=FALSE}
+my_model <- glm(formula, data, family='binomial')
+```
+- Keep in mind, the target variable in the formula must numeric between 0 and 1
+
+## Logistic Regression with `glm`: Example
+- With our `test_std` dataset, let's fit a logistic regression model of 
+`expensive` against `carat` and `cut`
+- Since `expensive` is not numeric, we must convert it first
+```{r, warning=FALSE}
+train_std$exp_numeric <- 
+    ifelse(train_std$expensive == 'yes', 1, 0)
+fm <- glm(exp_numeric ~ carat + cut, 
+          train_std, family='binomial')
+```
+- Explore the model with
+```{r, eval=FALSE}
+coef(fm)
+summary(fm)
+```
 
 ## Regularized Linear Models with `glmnet`
+- There are many packages that deal with regularized linear models
+- I (personally) find `glmnet` to be most useful and consistent
+- The objective function for `glmnet` is
+
+$$ \mathtt{glm}~\mathrm{objective} - \lambda\times\mathtt{penalty} $$
+
+- Where the `penalty` is defined as
+
+$$ (1-\alpha)/2\Vert \beta \Vert_2^2 + \alpha \Vert \beta \Vert_1 $$
+
+- Note that $\alpha=1$ is the L1 (lasso) penalty, and $\alpha=0$ is the L2 
+(ridge) penalty
+
+## Regularized Linear Models with `glmnet` (cont'd)
+- The `glmnet` syntax is
+```{r, eval=FALSE}
+my_model <- glmnet(x, y, family, alpha, nlambda)
+```
+
+- **`x`** is the `model matrix`
+- **`y`** is the target variable vector
+- **`family`** determines the link function (Gaussian by default)
+- **`alpha`** determines lasso (1), ridge (0), or a mix of the two
+- **`nlambda`** controls the number of $\lambda$ values to try
+- Note that `glmnet` automatically computes its own sequence of $\lambda$ values 
+based on `nlambda`, and using a specific value of $\lambda$ is discouraged (see
+`?glmnet` for details)
+
+## Regularized Linear Models with `glmnet`: Choosing $\lambda$
+- The penalty weight $\lambda$ is a free parameter in regularized linear models,
+and must be determined somehow
+- A quick and dirty, but pretty reasonable way to choose $\lambda$ with `glmnet`
+is to use `cv.glmnet()`
+- `cv.glmnet()` does k-fold cross-validation for `glmnet`, and returns 
+values/models for $\lambda$
+- **In addition to `glmnet` arguments**, in `cv.glmnet()` we can set the number of 
+folds $k$ to use in k-fold cross validation by supplying the argument `nfolds`. 
+Default is 10.
+- The `plot()` function for `cv.glmnet()` provides some insight on the value of 
+$\lambda$ and cross-validated model performance
+
+## Regularized Linear Models: Example
+- For L1-regularized model of `price` against `carat` and `cut`
+```{r}
+y <- train_std$price
+x <- model.matrix(price ~ carat + cut, train_std)
+price_l1 <- cv.glmnet(x, y, alpha=1)
+```
+
+- For L2-regularized model of `expensive` against `carat` and `cut`
+```{r}
+y <- ifelse(train_std$expensive == 'yes', 1, 0)
+x <- model.matrix(expensive ~ carat + cut, train_std)
+expensive_l2 <- 
+    cv.glmnet(x, y, alpha=0, family='binomial')
+```
+
+## Regularized Linear Models: Example (plots)
+```{r, fig.height=3.3}
+plot(price_l1)
+```
+
+## Regularized Linear Models: Example (plots)
+```{r, fig.height=3.3}
+plot(expensive_l2)
+```
 
 ## Random Forests
+- The `randomForest` package in `R` implements Breiman's random forest 
+algorithm, based on Breiman and Cutler's original Fortran code
+- It can be used for classification, regression, or unsepervised learning of 
+proximity between data points
+- The basic syntax is
+```{r, eval=FALSE}
+randomForest(x, y, ntree)
+```
+
+- **`x`**: the model matrix
+- **`y`**: target variable vector. *Classification* if `y` is a factor, 
+*regression* if `y` is otherwise, and *unsupervised* learning if `y` is omitted.
+- **ntree**: number of trees to include in the forest
+- While `randomForest` will also work for the `formula`/data frame syntax, a 
+model matrix is considered more efficient
+
+## Random Forests: Examples
+- To predict `price` with `carat` and `cut`
+```{r, eval=FALSE}
+y <- train_std$price
+x <- model.matrix(price ~ carat + cut, train_std)
+rf_price <- randomForest(x, y, ntree=100)
+```
+
+- To predict `expensive` with `carat` and `cut`
+```{r, eval=FALSE}
+y <- factor(train_std$expensive)
+x <- model.matrix(expensive ~ carat + cut, train_std)
+rf_expensive <- randomForest(x, y, ntree=100)
+```
+
+- `randomForest` is quite memory intensive
+- `randomForest` classification aggregates *votes* of individual trees (as 
+opposed to probability assessments), hence the floating-point precision is 
+strictly determined by the order of `ntree`, i.e., 1/`ntree`
+
+## Exercises
+- Fit the following models, with `train_std` and `train_mm` where appropriate, 
+from previous exercises
+    - `lm_price`: OLS model of `price` against everything 
+    - `logit_exp`: Logistic regression of `expensive` against everything 
+    - `l2_price`: L2 regularized logistic regression of `price` 
+    - `rf_dist`: Random forest with 50 trees in unsupervised mode using 
+    everything but `price` and `expensive`
+- When I say "everythin", I mean "everything but `expensive`" for `price`, and 
+vice versa
+
+## Solution
+```{r, eval=FALSE}
+lm_price <- lm(price ~ . - expensive, train_std)
+
+train_std$expensive_num <- 
+    ifelse(train_std$expensive == 'yes', 1, 0)
+logit_exp <- glm(expensive_num ~ . - price - expensive, 
+                 train_std, family='binomial')
+
+l2_price <- cv.glmnet(x=train_mm, y=train_std$price, alpha=0)
+
+rf_dist <- randomForest(x=train_mm, y=train_std$price, ntrees=100)
+```
 
 # Prediction/Evaluation
 
