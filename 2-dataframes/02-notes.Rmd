@@ -761,6 +761,19 @@ finance.summary
 
 # Combining Data with `join`s
 
+## Basic concatenations
+- `rbind`: concatenate rows
+- `cbind`: concatenate columns
+
+## Example (with matrix, but works with data frames too)
+```{r}
+A <- matrix(1:4, 2, 2)
+B <- matrix(5:8, 2, 2)
+rbind(A, B)
+cbind(A, B)
+```
+
+
 ## Introduction to `join`s
 - Sometimes, you will find relevant data across multiple datasets, e.g., a list 
 of grades in one dataset and a list of contact information in another
