@@ -11,6 +11,14 @@ output:
     theme: boxes
 ---
 
+## Dependencies
+
+- Please download and install 
+    - Latest version ($\ge$ `3.1.2`) of `R`  
+      (*free* from <https://www.r-project.org/>)
+    - Latest version of `Rstudio` 
+      (also *free* from <https://www.rstudio.com/>)
+  
 ## A Question
 > You are given three sticks, each of a random length between 0 and 1.
 
@@ -19,12 +27,6 @@ output:
 - The answer is 1/2
 - By the end of this session, we'll confirm this with a simulation in `R`
 
-## Dependencies
-
-- Latest version ($\ge$ `3.1.2`) of `R`  
-  (*free* from <https://www.r-project.org/>)
-- Latest version of `Rstudio` 
-  (also *free* from <https://www.rstudio.com/>)
 
 ## `Rstudio` Basics
 ![Screenshot of Rstudio](../img/r-studio.png)
