@@ -24,6 +24,8 @@ install.packages('randomForest')
 install.packages('ggplot2')  # just for dataset
 install.packages('dplyr')
 install.packages('caret')  # optional
+# for evaluating classification models
+install.packages('ROCR')  
 ```
 - We'll use the `diamonds` dataset included in `ggplot2` for demonstration
 ```{r, echo=FALSE, results='hide', message=FALSE}
@@ -36,8 +38,8 @@ library('caret')
 ```
 
 ## Statistical Modeling
-- In this session, I'll demonstrate some common statistical modeling 
-techniques used in `R`
+- In this session, I'll share some statistical modeling techniques I've picked 
+up using `R`
 - But I *won't*
     - Go into the theory/details of each (or any) method/model; I assume you 
     know all that already
@@ -125,7 +127,7 @@ dia_test <- dia_tmp[-valid_ind, ]
 cover `caret`, but this is one exception ... )
 - Also, for more than 3 splits, you might want to manage each split with labels, 
 rather than creating multiple data frames
-```{r}
+```{r, eval=FALSE}
 nsplits <- 10  # the number of splits you want
 split_ind <- createFolds(diamonds$carat, k=nsplits)
 
@@ -273,7 +275,7 @@ test_std[, numcol_names] <- test_num
 train_mm <- 
     model.matrix(price ~ . - expensive, train_std)
 test_mm <- 
-    model.matrix(price ~ . - expensive, train_std)
+    model.matrix(price ~ . - expensive, test_std)
 ```
 
 # Training models
@@ -328,7 +330,7 @@ my_model <- glm(formula, data, family='binomial')
 - With our `test_std` dataset, let's fit a logistic regression model of 
 `expensive` against `carat` and `cut`
 - Since `expensive` is not numeric, we must convert it first
-```{r, warning=FALSE}
+```{r, eval=FALSE}
 train_std$exp_numeric <- 
     ifelse(train_std$expensive == 'yes', 1, 0)
 fm <- glm(exp_numeric ~ carat + cut, 
@@ -426,14 +428,14 @@ randomForest(x, y, ntree)
 model matrix is considered more efficient
 
 ## Random Forests: Examples
-- To predict `price` with `carat` and `cut`
+- To fit random forest of `price` against `carat` and `cut`
 ```{r, eval=FALSE}
 y <- train_std$price
 x <- model.matrix(price ~ carat + cut, train_std)
 rf_price <- randomForest(x, y, ntree=100)
 ```
 
-- To predict `expensive` with `carat` and `cut`
+- To fit a random forest `expensive` against `carat` and `cut`
 ```{r, eval=FALSE}
 y <- factor(train_std$expensive)
 x <- model.matrix(expensive ~ carat + cut, train_std)
@@ -450,26 +452,196 @@ strictly determined by the order of `ntree`, i.e., 1/`ntree`
 from previous exercises
     - `lm_price`: OLS model of `price` against everything 
     - `logit_exp`: Logistic regression of `expensive` against everything 
-    - `l2_price`: L2 regularized logistic regression of `price` 
-    - `rf_dist`: Random forest with 50 trees in unsupervised mode using 
-    everything but `price` and `expensive`
-- When I say "everythin", I mean "everything but `expensive`" for `price`, and 
+    - `l1_price`: L1 regularized logistic regression of `price` against 
+    everything
+    - `rf_exp`: Random forest classification model with 50 trees that uses 
+    `cut`, `color`,  and `clarity` to  predict `expensive`
+- When I say "everything", I mean "everything but `expensive`" for `price`, and 
 vice versa
 
 ## Solution
-```{r, eval=FALSE}
+```{r, warning=FALSE}
 lm_price <- lm(price ~ . - expensive, train_std)
 
 train_std$expensive_num <- 
     ifelse(train_std$expensive == 'yes', 1, 0)
-logit_exp <- glm(expensive_num ~ . - price - expensive, 
-                 train_std, family='binomial')
+logit_exp <- 
+    glm(expensive_num ~ . - price - expensive,  
+        train_std, family='binomial')
 
-l2_price <- cv.glmnet(x=train_mm, y=train_std$price, alpha=0)
+l1_price <- 
+    cv.glmnet(x=train_mm, y=train_std$price, alpha=1,
+              standardize=FALSE, intercept=FALSE)
 
-rf_dist <- randomForest(x=train_mm, y=train_std$price, ntrees=100)
+y <- factor(train_std$expensive)
+x <- model.matrix(expensive ~ cut + color + clarity, train_std)
+rf_exp <- randomForest(x, y, ntree=50)
 ```
 
 # Prediction/Evaluation
 
+## The Generic `predict()` 
+- Any decend modeling package in `R` will provide its own version of the generic 
+`predict()` function
+- The generic syntax is
+```{r, eval=FALSE}
+predict(model_object, newdata, type)
+```
+- The `type` argument is often optional, and specifies the 'scale' of the 
+predictions, e.g., probabilities v. log-odds for logistic regression models
+- It's best (but not always necessary) for the `newdata` to have the same 
+variables (columns) as the data that was used to train the model
+
+## The Generic `predict()`: Examples
+- Using the models from the previous exercise, we can generate predictions for 
+the `test_std` data
+```{r}
+lm_price_pred <- predict(lm_price, test_std)
+
+test_std$expensive_num <- 
+    ifelse(test_std$expensive == 'yes', 1, 0)
+
+logit_exp_pred <- predict(logit_exp, test_std, 
+                          type='response')
+
+l1_price_pred <- predict(l1_price, test_mm, 
+                         s='lambda.min')
+
+rf_exp_pred <- predict(rf_exp, test_mm, 
+                       type='prob')
+```
+
+## Example Notes
+- The `s` argument for `predict.cv.glmnet` specifies the criteria for selecting 
+a $\lambda$ value from those that were fitted (see `?predict.cv.glmnet` for details)
+- Beware of the column ordering for `rf_exp_pred` !
+```{r}
+head(rf_exp_pred, n=2)
+```
+
+## Manual Predictions
+- For linear models, generating predictions from new data should be as simple as
+matrix multiplication (with the help of `coef()`), e.g.,
+```{r}
+manual_l1_price <-
+    cbind(1, test_mm) %*%
+    coef(l1_price, s='lambda.min') 
+all(manual_l1_price == l1_price_pred)
+```
+- What might *not* be simple is creating the right matrix
+- It's probably safe to stick with `predict()`, but make **sure** you read the 
+documentation for new packages!!!!
+
+## Evaluation
+- Once the predictions on the test set are generated, you should be able to 
+compute any performance measure you're interested in
+```{r}
+# RMSE for lm_price
+sqrt(mean((test_std$price - lm_price_pred)^2))
+# RMSE for l1
+sqrt(mean((test_std$price - l1_price_pred)^2))
+```
+
+## Evaluation (cont'd)
+```{r}
+# Accuracy for logit_exp (for threshold 0.5)
+logit_exp_vote <- ifelse(logit_exp_pred >= .5, 1, 0)
+mean(logit_exp_vote == test_std$expensive_num)
+# Accuracy for rf_exp (for threshold 0.5)
+rf_exp_vote <- ifelse(rf_exp_pred[,2] >= .5, 1, 0)
+mean(rf_exp_vote == test_std$expensive_num)
+```
+
+## Evaluating Classifications
+- The `ROCR` package can come in handy when evaluating classification models
+```{r, message=FALSE, warning=FALSE}
+library(ROCR)
+pred <- prediction(rf_exp_pred[, 2], 
+                   test_std$expensive_num)
+auc <- performance(pred, 'auc')
+unlist(slot(auc, 'y.values'))
+```
+
+## Evaluating Classifications (cont'd)
+```{r, fig.height=3, fig.width=3}
+perf <- performance(pred, 'tpr', 'fpr')
+plot(perf)
+```
+
+- See website https://rocr.bioinf.mpi-sb.mpg.de/ for details and more examples
+
 # Bootstrap
+
+## The Sledgehammer
+- The actual implementation of generating bootstrap sampling distributions is 
+super simple
+- What might not be as simple is
+    1. Truly understanding the theory
+    2. Finding the right way of constructing measure of interest, e.g., 
+    confidence interval
+    3. Implementing in a concise, reusable, and efficient way
+- There are probably entire courses covering the first two
+- People tend to gloss over the third
+- I'll **only** focus on the third
+- But keep in mind, knowing how to do it is very different from doing it right
+
+## Framework
+1. Write a dummy function that 
+    - takes a single (dummy) argument
+    - creates a single bootstrap sample from the original sample
+    - returns the statistic of interest of the boostrap sample (as a scalar)
+2. Use `boot <- sapply(1:B, dummy_function)` to create a bootstrap estimation 
+of the  sampling distribution
+3. Compute the measure of interest (e.g., confidence interval) using the 
+original sample and the `boot` vector created in (2)
+
+- To save computation time, let's use a subsample of `diamonds` for the 
+following examples
+```{r}
+diamonds_small <- sample_n(diamonds, 5000)
+```
+
+
+## Simple Example
+- Construct a bootstrap estimate of the sampling distribution for the mean of 
+`price` in the `diamonds` data, with $B=1,000$
+```{r, cache=TRUE}
+# 1. A dummy function
+get_mean <- function(x) {
+    mean(sample(diamonds_small$price, 
+                nrow(diamonds_small), 
+                replace=TRUE))
+}
+# 2. Creating the boot vector
+boot <- sapply(1:1000, get_mean)
+```
+
+## Histogram of `boot` and Original Point Estimate
+```{r, echo=FALSE, cache=TRUE, fig.width=7}
+qplot(boot, bins=20) + 
+    geom_vline(aes(xintercept=mean(diamonds_small$price)), color='red', linetype=2)
+```
+
+## Less Simple Example
+- Construct a bootstrap estimate of the sampling distribution for the 
+coefficient of `carat` for a OLS model fitting `price` to everything
+
+```{r, cache=TRUE}
+# 1. A dummy function
+get_coef <- function(x) {
+    df <- sample_frac(diamonds_small, size=1,
+                      replace=TRUE)
+    fm <- lm(price ~ ., df)
+    as.numeric(coef(fm)['carat'])
+}
+# 2. Creating the boot vector
+boot <- sapply(1:1000, get_coef)
+```
+
+## Histogram of `boot` and Original Point Estimate
+```{r, echo=FALSE, cache=TRUE, fig.width=7}
+fm <- lm(price ~ ., diamonds_small)
+point.est <- as.numeric(coef(fm)['carat'])
+qplot(boot, bins=20) + 
+    geom_vline(aes(xintercept=point.est), color='red', linetype=2)
+```
