@@ -205,7 +205,7 @@ carat ~ cut + depth
 ## `model.matrix()`: Example
 - To construct a model matrix for the formula
 $$y_{\mathtt{carat}} = \beta_0 + \beta_{\mathtt{cut}} x_{\mathtt{cut}} +
-    + \beta_{\mathtt{depth}} x_{\mathtt{depth}}$$
+     \beta_{\mathtt{depth}} x_{\mathtt{depth}}$$
     
 ```{r}
 train_mm <- model.matrix(carat ~ cut + depth, 
@@ -481,7 +481,7 @@ rf_exp <- randomForest(x, y, ntree=50)
 # Prediction/Evaluation
 
 ## The Generic `predict()` 
-- Any decend modeling package in `R` will provide its own version of the generic 
+- Any decent modeling package in `R` will provide its own version of the generic 
 `predict()` function
 - The generic syntax is
 ```{r, eval=FALSE}
